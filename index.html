@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduTrack | Student Management</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f4f6fc;--white:#fff;--ink:#202944;--muted:#8490a5;--primary:#625ce7;--line:#e9ecf3;--green:#159b72;--red:#dc5361}
+body{margin:0;background:var(--bg);font-family:Inter,Arial,sans-serif;color:var(--ink)}
+button,input{font:inherit}
+button{cursor:pointer}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:245px;background:#191d3b;color:white;padding:25px 16px;flex-shrink:0}
+.logo{font-size:25px;font-weight:800;padding:5px 12px 30px}
+.logo span{color:#aaa6ff}
+.nav{display:block;width:100%;text-align:left;padding:14px;border:0;border-radius:9px;background:transparent;color:#c9cbe0;margin:4px 0}
+.nav.active,.nav:hover{background:#373b68;color:white}
+.main{flex:1;min-width:0;padding:30px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;gap:12px}
+h1{font-size:26px;margin:0 0 7px}
+h2{font-size:19px;margin:0 0 18px}
+.muted{color:var(--muted);font-size:13px}
+.user{background:white;border:1px solid var(--line);padding:10px 14px;border-radius:9px;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:22px}
+.card,.panel{background:white;border:1px solid var(--line);border-radius:13px;padding:20px}
+.metric-label{color:var(--muted);font-size:13px}
+.metric{font-size:29px;font-weight:800;margin-top:10px}
+.panel{margin-bottom:20px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:17px}
+input{width:100%;padding:12px;border:1px solid #dfe3ed;border-radius:8px;outline:none}
+input:focus{border-color:var(--primary)}
+.toolbar input{flex:1;min-width:180px}
+.field{margin-bottom:15px}
+.field label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}
+.btn{border:0;border-radius:8px;padding:11px 16px;background:var(--primary);color:white;font-weight:600}
+.btn.secondary{background:#eeefff;color:#514bd0}
+.btn.danger{background:#fff0f1;color:var(--red)}
+.btn.green{background:var(--green)}
+.btn.small{padding:7px 10px;font-size:12px}
+table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:13px}
+th,td{padding:14px 12px;border-bottom:1px solid var(--line);text-align:left}
+th{background:#fafbfe;color:var(--muted);font-weight:600}
+.tablewrap{overflow-x:auto}
+.badge{background:#e7f7ef;color:#16855f;border-radius:20px;padding:5px 9px;font-size:11px}
+.hidden{display:none!important}
+.notice{background:#f0f0ff;color:#514bd0;padding:12px;border-radius:8px;font-size:13px;margin-top:12px}
+.empty{text-align:center;padding:30px;color:var(--muted)}
+.toast{position:fixed;right:20px;bottom:20px;background:#202944;color:white;padding:14px 20px;border-radius:9px;display:none;z-index:5}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.login{max-width:410px;margin:9vh auto;background:white;padding:30px;border-radius:15px;border:1px solid var(--line)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:800px){.sidebar{width:190px}.main{padding:20px}.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:580px){.layout{display:block}.sidebar{width:100%;padding:12px}.logo{padding:8px 10px 12px}.navlist{display:flex;overflow-x:auto;gap:5px}.nav{white-space:nowrap;width:auto;padding:11px}.main{padding:15px}.grid{grid-template-columns:1fr 1fr;gap:9px}.card{padding:14px}.metric{font-size:23px}.formgrid{grid-template-columns:1fr}.top{align-items:flex-start}}
+</style>
+</head>
+<body>
+
+<div id="loginPage" class="login">
+<h1>🎓 EduTrack</h1>
+<p class="muted">Student Management System</p>
+<div class="field"><label>Username</label><input id="username" value="admin"></div>
+<div class="field"><label>Password</label><input id="password" type="password" value="admin123"></div>
+<button class="btn" style="width:100%" onclick="login()">Login</button>
+<div class="notice">Demo login: admin / admin123</div>
+<p class="muted">Demo access only. Do not use real passwords.</p>
+</div>
+
+<div id="app" class="layout hidden">
+<aside class="sidebar">
+<div class="logo">🎓 Edu<span>Track</span></div>
+<div class="navlist">
+<button class="nav active" onclick="page('dashboard',this)">▦ Dashboard</button>
+<button class="nav" onclick="page('students',this)">▤ All Students</button>
+<button class="nav" onclick="page('add',this)">＋ Add Student</button>
+<button class="nav" onclick="page('search',this)">⌕ Search Student</button>
+<button class="nav" onclick="page('reports',this)">▥ Reports</button>
+</div>
+</aside>
+
+<main class="main">
+<div class="top">
+<div><h1 id="heading">Dashboard</h1><span class="muted">Manage your student records easily</span></div>
+<div class="user">Admin &nbsp;<button class="btn small secondary" onclick="logout()">Logout</button></div>
+</div>
+
+<section id="dashboard" class="screen">
+<div class="grid" id="metrics"></div>
+<div class="panel">
+<h2>Recent Students</h2>
+<div class="tablewrap" id="recent"></div>
+</div>
+</section>
+
+<section id="students" class="screen hidden">
+<div class="panel">
+<h2>All Students</h2>
+<div class="toolbar">
+<input id="studentSearch" placeholder="Search by roll number, name or course..." oninput="renderStudents()">
+<button class="btn" onclick="page('add',document.querySelectorAll('.nav')[2])">+ Add Student</button>
+</div>
+<div class="tablewrap" id="studentTable"></div>
+</div>
+</section>
+
+<section id="add" class="screen hidden">
+<div class="panel">
+<h2 id="formTitle">Add New Student</h2>
+<input type="hidden" id="editRoll">
+<div class="formgrid">
+<div class="field"><label>Roll Number *</label><input id="roll" placeholder="Enter roll number"></div>
+<div class="field"><label>Student Name *</label><input id="name" placeholder="Enter student name"></div>
+<div class="field"><label>Course *</label><input id="course" placeholder="Enter course name"></div>
+</div>
+<button class="btn" onclick="saveStudent()">Save Student</button>
+<button class="btn secondary" onclick="clearForm()">Clear</button>
+</div>
+</section>
+
+<section id="search" class="screen hidden">
+<div class="panel">
+<h2>Search Student</h2>
+<div class="field"><label>Enter Roll Number</label><input id="searchRoll" placeholder="Enter roll number"></div>
+<button class="btn" onclick="searchStudent()">Search Student</button>
+<div id="searchResult"></div>
+</div>
+</section>
+
+<section id="reports" class="screen hidden">
+<div class="grid" id="reportMetrics"></div>
+<div class="panel">
+<h2>Student Reports</h2>
+<button class="btn" onclick="exportCSV()">Download Student Records CSV</button>
+<p class="muted">Open the downloaded CSV file using Microsoft Excel.</p>
+</div>
+</section>
+<footer>EduTrack | Student Management System</footer>
+</main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const STORAGE="edutrack_students_demo_v1";
+let students=JSON.parse(localStorage.getItem(STORAGE)||"[]");
+
+function persist(){
+ localStorage.setItem(STORAGE,JSON.stringify(students));
+ renderAll();
+}
+function notify(message){
+ let t=document.getElementById("toast");
+ t.textContent=message;
+ t.style.display="block";
+ setTimeout(()=>t.style.display="none",2500);
+}
+function login(){
+ if(document.getElementById("username").value.trim()==="admin"&&document.getElementById("password").value==="admin123"){
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  renderAll();
+ }else notify("Invalid demo login.");
+}
+function logout(){
+ document.getElementById("app").classList.add("hidden");
+ document.getElementById("loginPage").classList.remove("hidden");
+}
+function page(id,button){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+ document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));
+ if(button)button.classList.add("active");
+ let titles={dashboard:"Dashboard",students:"All Students",add:"Add Student",search:"Search Student",reports:"Student Reports"};
+ document.getElementById("heading").textContent=titles[id];
+ renderAll();
+}
+function safe(value){
+ return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function table(rows){
+ if(!rows.length)return '<div class="empty">No student records found.</div>';
+ return `<table><thead><tr><th>Roll Number</th><th>Student Name</th><th>Course</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+ ${rows.map(s=>`<tr><td><b>${safe(s.roll)}</b></td><td>${safe(s.name)}</td><td>${safe(s.course)}</td><td><span class="badge">Active</span></td><td><button class="btn small secondary" onclick="editStudent('${encodeURIComponent(s.roll)}')">Edit</button> <button class="btn small danger" onclick="deleteStudent('${encodeURIComponent(s.roll)}')">Delete</button></td></tr>`).join("")}
+ </tbody></table>`;
+}
+function renderStudents(){
+ let q=(document.getElementById("studentSearch")?.value||"").toLowerCase();
+ let result=students.filter(s=>(s.roll+" "+s.name+" "+s.course).toLowerCase().includes(q));
+ document.getElementById("studentTable").innerHTML=table(result);
+}
+function renderAll(){
+ let courses=new Set(students.map(s=>s.course.trim().toLowerCase()));
+ document.getElementById("metrics").innerHTML=[
+ ["Total Students",students.length],
+ ["Total Courses",courses.size],
+ ["Student Records","Available"]
+ ].map(x=>`<div class="card"><div class="metric-label">${x[0]}</div><div class="metric">${x[1]}</div><p class="muted">EduTrack overview</p></div>`).join("");
+ document.getElementById("recent").innerHTML=table(students.slice(-5).reverse());
+ renderStudents();
+ document.getElementById("reportMetrics").innerHTML=[
+ ["Total Students",students.length],
+ ["Total Courses",courses.size]
+ ].map(x=>`<div class="card"><div class="metric-label">${x[0]}</div><div class="metric">${x[1]}</div></div>`).join("");
+}
+function clearForm(){
+ ["editRoll","roll","name","course"].forEach(id=>document.getElementById(id).value="");
+ document.getElementById("roll").disabled=false;
+ document.getElementById("formTitle").textContent="Add New Student";
+}
+function saveStudent(){
+ let oldRoll=document.getElementById("editRoll").value;
+ let roll=document.getElementById("roll").value.trim();
+ let name=document.getElementById("name").value.trim();
+ let course=document.getElementById("course").value.trim();
+ if(!roll||!name||!course)return notify("Please fill in all fields.");
+ if(!oldRoll&&students.some(s=>s.roll===roll))return notify("This roll number already exists.");
+ if(oldRoll){
+  let s=students.find(x=>x.roll===oldRoll);
+  if(!s)return notify("Student not found.");
+  s.name=name;s.course=course;
+  notify("Student updated successfully.");
+ }else{
+  students.push({roll,name,course});
+  notify("Student added successfully.");
+ }
+ clearForm();persist();
+ page("students",document.querySelectorAll(".nav")[1]);
+}
+function editStudent(encodedRoll){
+ let roll=decodeURIComponent(encodedRoll);
+ let s=students.find(x=>x.roll===roll);
+ if(!s)return;
+ document.getElementById("editRoll").value=s.roll;
+ document.getElementById("roll").value=s.roll;
+ document.getElementById("roll").disabled=true;
+ document.getElementById("name").value=s.name;
+ document.getElementById("course").value=s.course;
+ document.getElementById("formTitle").textContent="Update Student";
+ page("add",document.querySelectorAll(".nav")[2]);
+}
+function deleteStudent(encodedRoll){
+ let roll=decodeURIComponent(encodedRoll);
+ let s=students.find(x=>x.roll===roll);
+ if(!s||!confirm("Delete student "+s.name+"?"))return;
+ students=students.filter(x=>x.roll!==roll);
+ persist();notify("Student deleted successfully.");
+}
+function searchStudent(){
+ let roll=document.getElementById("searchRoll").value.trim();
+ let s=students.find(x=>x.roll.toLowerCase()===roll.toLowerCase());
+ let result=document.getElementById("searchResult");
+ if(!roll){result.innerHTML='<div class="notice">Enter a roll number first.</div>';return;}
+ if(!s){result.innerHTML='<div class="notice">Student not found.</div>';return;}
+ result.innerHTML=`<div class="panel" style="margin-top:18px"><h2>Student Found</h2><p><b>Roll Number:</b> ${safe(s.roll)}</p><p><b>Name:</b> ${safe(s.name)}</p><p><b>Course:</b> ${safe(s.course)}</p><button class="btn small secondary" onclick="editStudent('${encodeURIComponent(s.roll)}')">Edit Student</button></div>`;
+}
+function exportCSV(){
+ if(!students.length)return notify("No student records to export.");
+ let rows=[["Roll Number","Student Name","Course"],...students.map(s=>[s.roll,s.name,s.course])];
+ let csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+ let blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+ let url=URL.createObjectURL(blob);
+ let a=document.createElement("a");
+ a.href=url;a.download="edutrack_student_records.csv";a.click();
+ URL.revokeObjectURL(url);
+ notify("Student report downloaded.");
+}
+renderAll();
+</script>
+</body>
+</html>
